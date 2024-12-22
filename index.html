@@ -1,0 +1,218 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dronord v0.1</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" href="images/favicon-peaceful.ico" type="image/x-icon">
+</head>
+<body>
+    <div id="overlay" class="overlay"></div>
+    <div id="loading-screen"></div>
+    <div class="console" id="console">
+        <div class="console-content" id="console-content">
+            <div class="dots" id="dots">C:/></div>
+            <div class="flicker-line" id="flicker-line" style="display: block;"></div>
+        </div>
+        <button class="start-button" id="start-btn" style="display: none;">Turn On</button>
+    </div>
+    <div class="game-container-wrapper">
+    <div class="game-container" id="game-container">
+        <div class="ore-info" id="ore-info" style="display: none;">
+            <div class="ore-image">
+            <strong>Ore</strong> <img src="images/ore1.png" alt="Ore" class="ore-icon" id="ore-icon">
+            <p>
+                <span id="ore-count">0</span> 
+                <br>
+                <span id="ore-rate">0</span>/s
+            </p>
+            </div>
+            <div class="drone-image" id="drone-image">
+            <strong>Drones</strong> <img src="images/drone-peaceful-image.png" alt="Drone" class="drone-icon" id="drone-icon">
+            <p>
+                <span id="drone-count">0</span> 
+                <br>
+                <span id="drone-rate">0</span>/s
+            </p>
+            </div>
+        </div>
+        <div class="tabs" id="tabs">
+            <div class="tab-buttons-container">
+                <button class="tab-button" data-tab="mine">Mine</button>
+                <button class="tab-button" data-tab="core-systems">Core Systems</button>
+                <button class="tab-button" data-tab="upgrades" id="upgrades-btn">Upgrades</button>
+                <button class="tab-button" data-tab="drones" id="drones-btn">Drones</button>
+                <button class="tab-button" data-tab="research" id="research-btn">Research</button>
+                <button class="tab-button" data-tab="options">Options</button>
+            </div>
+
+            <div class="subtabs" id="upgrades-subtabs" style="display: none;">
+                <button class="subtab-button" data-subtab="repeatable-upgrades-content">Improvements</button>
+                <button class="subtab-button" data-subtab="one-time-upgrades-content" id="one-time-upgrades-btn">Upgrades</button>
+            </div>
+            <div class="subtabs" id="options-subtabs" style="display: none;">
+                <button class="subtab-button" data-subtab="Options">Options</button>
+                <button class="subtab-button" data-subtab="info">Info</button>
+            </div>
+
+            <div class="subtabs" id="core-systems-subtabs" style="display: none;">
+                <button class="subtab-button" data-subtab="core-systems-content">Core Sector</button>
+                <button class="subtab-button" data-subtab="operational-systems-content">Operational Sector</button>
+                <button class="subtab-button" data-subtab="utility-systems-content">Utility Sector</button>
+            </div>
+        </div>
+
+        <!-- Mine Tab Content -->
+        <div class="tab-content" id="mine" style="display: block;">
+            <div class="collect-button-container">
+                <button id="collect-ore-btn" class="collect-button">Mine</button>
+                <svg class="complete-ring" width="360" height="360">
+                    <defs>
+                        <filter id="shadow1">
+                            <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="rgba(11, 255, 222)" />
+                        </filter>
+                        <filter id="shadow2">
+                            <feDropShadow dx="0" dy="0" stdDeviation="20" flood-color="rgba(11, 255, 222, 0.8)" />
+                        </filter>
+                    </defs>
+                    <circle class="complete-ring__circle" 
+                            stroke="rgba(11, 255, 222)" 
+                            stroke-width="15" 
+                            fill="transparent" 
+                            r="150" cx="180" cy="180" /></svg>
+                <svg class="progress-ring" width="360" height="360">
+                    <circle class="progress-ring__circle" 
+                            stroke="rgb(11, 255, 222)" 
+                            stroke-width="15" 
+                            fill="transparent" 
+                            r="150" cx="180" cy="180" />
+                </svg>
+            </div>
+        </div>
+
+        <div class="tab-content" id="core-systems" style="display: block;">
+            <div class="core-systems-container">
+                <!-- Core Systems Content -->
+                <div class="subtab-content" id="core-systems-content" style="display: none;">
+                    <!-- Core Systems here -->
+                </div>
+                
+                <!-- Operational Systems Content -->
+                <div class="subtab-content" id="operational-systems-content" style="display: none;">
+                    <!-- Operational Systems here -->
+                </div>
+                
+                <!-- Utility Systems Content -->
+                <div class="subtab-content" id="utility-systems-content" style="display: none;">
+                    <!-- Utility Systems here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Upgrades Tab Content -->
+        <div class="tab-content" id="upgrades" style="display: none;">
+            <div class="subtab-content" id="repeatable-upgrades-content" style="display: none;">
+                <div id="upgrades-container">
+                <div class="upgrade-box" id="repeatable-upgrades-container"></div>
+                </div>
+            </div>
+            <div class="subtab-content" id="one-time-upgrades-content" style="display: none;">
+                <div id="upgrades-container">
+                <button id="toggle-upgrades-btn" class="toggle-upgrades-btn">Show Purchased Upgrades</button>
+                <div class="upgrade-box" id="one-time-upgrades-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drones Tab Content-->
+        <div class="tab-content" id="drones" style="display:none;">
+            <div class="drone-box" id="drones-container"></div>
+            <div id="progress-bar" style="display: none;"></div>
+        </div>
+
+        <!-- Research Tab Content -->
+        <div class="tab-content" id="research" style="display:none;">
+            <div class="research-info" id="research-info">
+                <div class="research-image" id="research-image">
+                    <strong>Research</strong> <img src="images/research.png" alt="Research" class="research-icon" id="research-icon">
+                    <p>
+                        <span id="research-count">0</span> 
+                        <br>
+                        <span id="research-rate">0</span>/s
+                    </p>
+                </div>
+                <div class="research-storage-image" id="research-storage-image">
+                    <strong>Capacity</strong> <img src="images/researchLimit.png" alt="Storage" class="research-icon" id="research-icon">
+                    <p>
+                        <span id="researchLimit-count">0</span> 
+                    </p>
+                </div>
+            </div>
+            <div class="research-container-wrapper" id="research-container-wrapper">
+                <div class="research-container" id="research-container">
+        <!-- Research icons here -->
+                </div>
+                <button class="reset-position-btn" id="reset-position-btn"></button>
+            </div>
+        </div>
+
+        <!-- Options Tab Content -->
+        <div class="tab-content" id="options" style="display:none;">
+            <div class="subtab-content" id="Options" style="display: none;">
+                <button id="save-btn" class="options-button">Save Game</button>
+                <button id="reset-btn" class="options-button" onclick="showResetConfirmation()">Hard Reset</button>
+                <button id="export-btn" class="options-button">Export Save</button>
+                <button id="import-btn" class="options-button">Import Save</button>
+                <div class="time-played"><p class="time"><strong>Time Played:</strong> <span id="time">00:00:00</span></p></div>
+            </div>
+            <div class="subtab-content" id="info" style="display: none;">
+                <div class="stats">
+                    <div>
+                        1 pg (picogram)
+                        <br>
+                        1 ng (nanogram) = 1000 pg
+                        <br>
+                        1 µg (microgram) = 1000 ng
+                        <br>
+                        1 mg (milligram) = 1000 µg
+                        <br>
+                        1 g (gram) = 1000 mg
+                        <br>
+                        1 kg (kilogram) = 1000 g
+                        <br>
+                        <br>
+                        Dronord v0.1
+                        <br>
+                        Made by Rem20160 - Discord: mango4357
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+       
+        <div id="confirmation-modal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <p style="color: red">Are you sure you want to perform a hard reset? This will erase all progress!</p>
+                <button id="confirm-reset" onclick="hardReset(), closeModal()" class="modal-button">Yes, Reset</button>
+                <button onclick="closeModal()" class="modal-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div class="game-progress-bar-container" id="game-progress-bar-container">
+        <strong class="game-progress-text" id="gameProgressText">Unlock Drones</strong>
+        <div class="game-progress-bar" id="gameProgressBar"></div>
+    </div>
+    <script src="js/OmegaNum.js"></script>
+    <script src="js/progress.js"></script>
+    <script src="js/systems.js"></script>
+    <script src="js/format.js"></script>
+    <script src="js/function.js"></script>
+    <script src="js/Saving.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/gameloop.js"></script>
+    <script src="js/tabs.js"></script>
+</body>
+</html>
