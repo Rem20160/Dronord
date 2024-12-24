@@ -1,12 +1,12 @@
-const gameProgress = [0, 1, 2, 3, 4];
-const gameProgressThresholds = [new OmegaNum(0), new OmegaNum(0.1), new OmegaNum(2), new OmegaNum (1000), new OmegaNum(Infinity)];
-const gameProgressText = ["", "Unlock Drones", "Unlock Research", "Unlock The Factory", ""];
+const gameProgress = [0, 1, 2, 3];
+const gameProgressThresholds = [new OmegaNum(0), new OmegaNum(0.1), new OmegaNum(2), new OmegaNum(Infinity)];
+const gameProgressText = ["", "Unlock Drones", "Unlock Research", ""];
 let currentProgressIndex = 1;
 
 function updateProgressBar() {
     let progressValue, currentThreshold, nextThreshold;
 
-    if (currentProgressIndex <= 4) {
+    if (currentProgressIndex <= 3) {
         progressValue = OmegaNum(gameData.ore);
         currentThreshold = gameProgressThresholds[currentProgressIndex];
         nextThreshold = (currentProgressIndex + 1 < gameProgressThresholds.length) ? gameProgressThresholds[currentProgressIndex + 1] : null;
