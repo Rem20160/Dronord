@@ -16,10 +16,14 @@ const gameData = {
     orePerClick: new OmegaNum(0.001),
     holdDuration: new OmegaNum(1000),
     baseHoldDuration: new OmegaNum(1000),
+    holdDurationMultiplier: new OmegaNum(1),
     research: new OmegaNum(0),
     researchLimit: new OmegaNum(80),
     researchPerSecond: new OmegaNum(0),
     baseResearchPerSecond: new OmegaNum(0),
+    researchMultiplier: new OmegaNum(1),
+    maxDronesAtOnce: new OmegaNum(1),
+    droneBuildTimeMultiplier: new OmegaNum(1),
     repeatableUpgrades: [
         { id: "r1", desc: "Times", initialUpgradeCost: new OmegaNum(0.002), cost: new OmegaNum(0.002), costMultiplier: new OmegaNum(1.1), initialCostMultiplier: new OmegaNum(1.1), initialPurchaseCount: 0, purchaseCount: 0, upgradeVisible: false, multiplier: new OmegaNum(1), effectIncrement: new OmegaNum(0.2), initialEffectIncrement: new OmegaNum(0.2),
             getDescription() { 
@@ -92,11 +96,17 @@ const gameData = {
             updateOrePerSecond(); 
             updateOrePerClick();
         }},
-        { id: "o2", description: "Denser Ore", cost: new OmegaNum(20), upgradeVisible: false, desc: "effect: 1.5x", effect() { 
+        { id: "o2", description: "Denser ore", cost: new OmegaNum(20), upgradeVisible: false, desc: "effect: 1.5x", effect() { 
             gameData.oneTimeMultiplier = gameData.oneTimeMultiplier.mul(1.5); 
             updateOrePerSecond(); 
             updateOrePerClick();
-        }}
+        }},
+        { id: "o3", description: "Placeholder", cost: new OmegaNum(100), upgradeVisible: false, desc: "Placeholder", effect() { 
+        }},
+        { id: "o4", description: "Placeholder", cost: new OmegaNum(200), upgradeVisible: false, desc: "Placeholder", effect() { 
+        }},
+        { id: "o5", description: "Placeholder", cost: new OmegaNum(Infinity), upgradeVisible: false, desc: "Placeholder", effect() { 
+        }},
     ],
     drones: [
         {
@@ -468,26 +478,33 @@ const gameData = {
         },
         {
             id: "research11",
-            name: "Research 11",
+            name: "Drone Expansion",
             getDescription() {
-                return `PlaceHolder`
+                const nextCount = this.currentPurchases.toNumber() + 1; 
+                const nextMultiplier = 1 + (this.currentPurchases.toNumber() * 0.5);
+                return `Increase the Drones you can make by ${nextCount} <br> But, buildTime increased by ${nextMultiplier.toFixed(1)}x`
             },
             getDesc() {
-                return `PlaceHolder`
+                return `Effect: +1, 1.5x`
             },
             effectIncrement: new OmegaNum(1),
             iEI: new OmegaNum(1),
-            cost: new OmegaNum(1),
-            iCost: new OmegaNum(25),
-            costScaling: new OmegaNum(0),
+            cost: new OmegaNum(8192),
+            iCost: new OmegaNum(8192),
+            costScaling: new OmegaNum(1024),
             e: new OmegaNum(1),
             effect() {
+                this.cost = this.iCost.mul(this.costScaling.pow(this.currentPurchases));
+                return {
+                    maxDronesAtOnce: new OmegaNum(1).add(this.currentPurchases), 
+                    buildTimeMultiplier: new OmegaNum(1).add(this.currentPurchases.mul(OmegaNum(0.5))), 
+                };
             },
             calculateEffect() {
-                return this.e
+                return this.effect();
             },
-            maxPurchases: new OmegaNum(1),
-            iMP: new OmegaNum(1),
+            maxPurchases: new OmegaNum(3),
+            iMP: new OmegaNum(3),
             currentPurchases: new OmegaNum(0),
             unlockedItems: ["research14"],
             icon: "images/research/R11.png",
@@ -497,20 +514,21 @@ const gameData = {
         },
         {
             id: "research12",
-            name: "Research 12",
+            name: "Upgrade Expansion",
             getDescription() {
-                return `PlaceHolder`
+                return `Adds more upgrades`
             },
             getDesc() {
-                return `PlaceHolder`
+                return ``
             },
             effectIncrement: new OmegaNum(1),
             iEI: new OmegaNum(1),
-            cost: new OmegaNum(1),
-            iCost: new OmegaNum(25),
-            costScaling: new OmegaNum(0),
+            cost: new OmegaNum(40960),
+            iCost: new OmegaNum(40960),
+            costScaling: new OmegaNum(1),
             e: new OmegaNum(1),
             effect() {
+                this.cost = this.iCost;
             },
             calculateEffect() {
                 return this.e
@@ -781,7 +799,7 @@ function updateHoldDuration() {
     const r2 = gameData.repeatableUpgrades.find(upgrade => upgrade.id === "r2");
     const finalMultiplier = r2 ? r2.calculateEffect() : new OmegaNum(1); 
     gameData.holdDuration = gameData.baseHoldDuration.div(finalMultiplier)
-    .div(R(9).calculateEffect())
+    .div(R(9).calculateEffect()).div(gameData.holdDurationMultiplier)
 }
 
 function updateDroneEff() {
@@ -808,8 +826,8 @@ function updateBuildTimes() {
     const d1 = gameData.drones.find(drone => drone.id === "d1")
     const d2 = gameData.drones[1];
     const finalMultiplier = r3 ? r3.calculateEffect() : new OmegaNum(1); 
-    d1.buildTime = d1.initialBuildTime.div(finalMultiplier).div(R(8).calculateEffect());
-    d2.buildTime = d2.initialBuildTime.div(R(8).calculateEffect());
+    d1.buildTime = d1.initialBuildTime.div(finalMultiplier).div(R(8).calculateEffect()).mul(gameData.droneBuildTimeMultiplier);
+    d2.buildTime = d2.initialBuildTime.div(R(8).calculateEffect()).mul(gameData.droneBuildTimeMultiplier);
 }
 
 function updateResearchPerSecond() {
@@ -817,14 +835,18 @@ function updateResearchPerSecond() {
     const R7Mult = R(7) ? R(7).calculateEffect() : new OmegaNum(1);
     const R10Add = R(10) ? R(10).calculateEffect() : new OmegaNum(0);
     const R16Mult = R(16) ? R(16).calculateEffect() : new OmegaNum(1);
-    
+    const boostMultiplier = isBoostEnabled ? calculateBoost(oreUsage) : new OmegaNum(1);
+
     gameData.researchPerSecond = gameData.baseResearchPerSecond
         .add(R10Add)
-        .mul(R2Mult)     
+        .mul(R2Mult)
         .mul(R7Mult)
         .mul(R(13).calculateEffect())
-        .mul(R16Mult);
+        .mul(R16Mult)
+        .mul(gameData.researchMultiplier)
+        .mul(boostMultiplier);
 }
+
 
 function updateResearchMaxPurchases() {
     gameData.researchData.forEach((research, index) => {
@@ -833,8 +855,16 @@ function updateResearchMaxPurchases() {
     if (index === 1) {
         research.maxPurchases = research.iMP;
     }
-
 })}
+
+function updateResearchEffects() {
+    if (R(11)) {
+        const effect = R(11).effect();
+        gameData.maxDronesAtOnce = effect.maxDronesAtOnce;
+        gameData.droneBuildTimeMultiplier = effect.buildTimeMultiplier;
+        R(11).costScaling = new OmegaNum(1024);
+    }
+}
 
 function updateResearchLimit() {
     const baseLimit = new OmegaNum(80);
@@ -1029,6 +1059,11 @@ document.getElementById('start-btn').addEventListener('click', startGame);
 
 
 
+const messageQueue = [];
+let isTyping = false;
+let typingSound;
+let typingInterval;
+
 function logMessage(message) {
     const now = new Date();
     const timestamp = now.toLocaleDateString() + " " + now.toLocaleTimeString();
@@ -1042,20 +1077,35 @@ function logMessage(message) {
     }
 }
 
-let typingSound;
-let typingInterval;
-
 function loadTypingSound() {
     typingSound = new Audio('sounds/keyboard-typing.mp3');
     typingSound.loop = true;
     popSound = new Audio('sounds/pop-click.mp3');
     popSound.volume = 0.5;
+    typingSound.load();
+    popSound.load();
+    console.log("Sounds loaded.");
 }
 
 function displayMessage(fullMessage, useTypingEffect = true) {
+    messageQueue.push({ fullMessage, useTypingEffect });
+    if (!isTyping) {
+        processQueue();
+    }
+}
+
+function processQueue() {
+    if (messageQueue.length === 0) {
+        isTyping = false;
+        return; 
+    }
+    isTyping = true;
+    const { fullMessage, useTypingEffect } = messageQueue.shift(); 
     const dots = document.getElementById('dots');
+
     if (useTypingEffect) {
         let index = 0;
+
         if (typingSound) {
             typingSound.play().catch(error => {
                 console.error("Error playing typing sound:", error);
@@ -1063,6 +1113,7 @@ function displayMessage(fullMessage, useTypingEffect = true) {
         } else {
             console.error("Typing sound is not loaded.");
         }
+
         typingInterval = setInterval(() => {
             if (index < fullMessage.length) {
                 dots.innerHTML += fullMessage.charAt(index);
@@ -1071,14 +1122,18 @@ function displayMessage(fullMessage, useTypingEffect = true) {
             } else {
                 clearInterval(typingInterval);
                 if (typingSound) {
-                    typingSound.pause(); 
+                    typingSound.pause();
                     typingSound.currentTime = 0;
                 }
                 dots.innerHTML += "<br>"; 
+                isTyping = false;
+                processQueue(); 
             }
         }, 50); // Typing speed
     } else {
         dots.innerHTML += fullMessage + "<br>";
+        isTyping = false;
+        processQueue(); 
     }
 }
 
@@ -1125,9 +1180,9 @@ function corrupt(length) {
     return corruptedTextElement.outerHTML;
 }
 
-window.onload = function() {
-    loadMessages(); 
+window.onload = function() { 
     loadTypingSound();
+    loadMessages();
 };
 
 const initialMessage = "You seem to have gained consciousness. You have crash landed on Earth 66 Million years ago. Most of your memory is corrupted, aswell as most of the Core Systems are damaged. You are a drone. Your task is to mine.";
@@ -1136,7 +1191,7 @@ function displayInitialMessage() {
     displayMessage(`${initialMessage}`, true);
     setTimeout(() => {
     const startButton = document.getElementById('start-btn');
-    startButton.style.display = 'block'}, 10000); 
+    startButton.style.display = 'block'}, 12000); 
     const overlay = document.getElementById("overlay");
     overlay.remove(); 
 }
@@ -1145,7 +1200,95 @@ document.getElementById("overlay").addEventListener("click", function handleClic
     displayInitialMessage(); 
 });
 
+let soundEnabled = true; 
+let typingSoundVolume = 1;
+let popSoundVolume = 0.5;
 
+function toggleSoundModal() {
+    const modal = document.getElementById("soundModal");
+    modal.style.display = modal.style.display === "none" ? "block" : "none";
+}
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const toggleButton = document.getElementById("sound-toggle");
+    toggleButton.textContent = soundEnabled ? "On" : "Off";
+    toggleButton.classList.toggle("off", !soundEnabled);
+    if (!soundEnabled) {
+        typingSound.volume = 0;
+        popSound.volume = 0;
+    } else {
+        typingSound.volume = typingSoundVolume;
+        popSound.volume = popSoundVolume;
+    }
+    updateSoundSettingsUI();
+}
+
+function updateSoundVolume(type) {
+    if (type === "typing") {
+        typingSoundVolume = parseFloat(document.getElementById("typing-sound-slider").value);
+        if (soundEnabled) {
+            typingSound.volume = typingSoundVolume;
+        }
+    } else if (type === "pop") {
+        popSoundVolume = parseFloat(document.getElementById("pop-sound-slider").value);
+        if (soundEnabled) {
+            popSound.volume = popSoundVolume;
+        }
+    }
+}
+
+let isBoostEnabled = false;
+let oreUsage = new OmegaNum(0); 
+function calculateBoost(oreUsage) {
+    return new OmegaNum(1).add(oreUsage.sqrt().div(0.1)); 
+}
+
+function applyBoostEffects() {
+    if (isBoostEnabled) {
+        const boostMultiplier = calculateBoost(oreUsage);
+        gameData.researchPerSecond = gameData.baseResearchPerSecond.mul(boostMultiplier);
+    } else {
+        gameData.researchPerSecond = gameData.baseResearchPerSecond;
+    }
+}
+
+function setupBoostUI() {
+    const oreInput = document.getElementById("ore-input");
+    const toggleBoostButton = document.getElementById("toggle-boost-button");
+    const boostPreview = document.getElementById("boost-preview");
+    const boostStatus = document.getElementById("boost-status");
+
+    oreInput.value = oreUsage.toFixed(3); 
+    oreInput.max = gameData.ore.mul(0.01).toFixed(4); 
+    boostPreview.textContent = `Boost: ${formatNumber(calculateBoost(oreUsage))}x`;
+    boostStatus.textContent = isBoostEnabled ? "Boost Enabled" : "Boost Disabled";
+    toggleBoostButton.textContent = isBoostEnabled ? "Disable Boost" : "Enable Boost";
+    if (isBoostEnabled) {
+        toggleBoostButton.classList.remove("disabled");
+    } else {
+        toggleBoostButton.classList.add("disabled");
+    }
+
+    oreInput.addEventListener("input", () => {
+        const maxAllowed = new OmegaNum(oreInput.max || 0);
+        oreUsage = new OmegaNum(oreInput.value || 0).min(maxAllowed);
+        oreInput.value = oreUsage.toFixed(3); 
+        boostPreview.textContent = `Boost: ${formatNumber(calculateBoost(oreUsage))}x`;
+    });
+
+    toggleBoostButton.addEventListener("click", () => {
+        isBoostEnabled = !isBoostEnabled;
+        toggleBoostButton.textContent = isBoostEnabled ? "Disable Boost" : "Enable Boost";
+        boostStatus.textContent = isBoostEnabled ? "Boost Enabled" : "Boost Disabled";
+        if (isBoostEnabled) {
+            toggleBoostButton.classList.remove("disabled");
+        } else {
+            toggleBoostButton.classList.add("disabled");
+        }
+        applyBoostEffects();
+    });
+}
 
 
 
@@ -1167,6 +1310,7 @@ function updateVisibility() {
     const upgradesBtn = document.getElementById("upgrades-btn");
     const upgrades = document.getElementById("one-time-upgrades-btn");
     const research = document.getElementById("research-btn");
+    const factoryBtn = document.getElementById("factory-btn");
 
     tabs.style.display = gameData.tabsVisible ? 'inline-flex' : 'none';
     info.style.display = gameData.oreInfoVisible ? 'inline-flex' : 'none';
@@ -1178,4 +1322,5 @@ function updateVisibility() {
     upgradesBtn.style.display = selfRepairSystem && selfRepairSystem.status === "Operational" ? 'block' : 'none';
     const gameProgressBar = document.getElementById("game-progress-bar-container");
     gameProgressBar.style.display = gameData.tabsVisible ? 'block' : 'none';
+    factoryBtn.style.display = (gameData.currentProgressIndex >= 4) ? 'block' : 'none'; 
 }

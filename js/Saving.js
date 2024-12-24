@@ -58,6 +58,8 @@ function saveGame() {
         oneTimeMultiplier: gameData.oneTimeMultiplier.toString(),
         holdDuration: gameData.holdDuration.toString(),
         baseHoldDuration: gameData.baseHoldDuration.toString(),
+        holdDurationMultiplier: gameData.holdDurationMultiplier.toString(),
+        researchMultiplier: gameData.researchMultiplier.toString(),
         purchasedUpgrades: Array.from(gameData.purchasedUpgrades),
         repeatableUpgradeCosts: gameData.repeatableUpgrades.map(upgrade => upgrade.cost.toString()),
         repeatableUpgradeCostMultipliers: gameData.repeatableUpgrades.map(upgrade => upgrade.costMultiplier.toString()),
@@ -79,7 +81,9 @@ function saveGame() {
         droneUpgradeVisible: gameData.drones.map(drone => drone.upgradeVisible),
         droneBuildTime: gameData.drones.map(drone => drone.buildTime.toString()),
         
-
+        soundEnabled: soundEnabled,
+        typingSoundVolume: typingSoundVolume.toString(),
+        popSoundVolume: popSoundVolume.toString(),
 
         research: gameData.research.toString(),
         researchPerSecond: gameData.researchPerSecond.toString(),
@@ -92,6 +96,8 @@ function saveGame() {
         researchDataMaxPurchases: gameData.researchData.map(research => research.maxPurchases.toString()),
         researchDataCostScaling: gameData.researchData.map(research => research.costScaling.toString()),
         researchIsUnlocked: gameData.researchData.map(research => research.isUnlocked),
+
+        achievements: achievements.map(achievement => achievement.completed),
 
         systemRepairCosts: Object.keys(systems).flatMap(category => 
             systems[category].map(system => system.repairCost.toString())
@@ -111,6 +117,7 @@ function saveGame() {
 function loadGame() {
     const savedState = localStorage.getItem('gameState');
     if (savedState) {
+        loadTypingSound();
         const gameState = JSON.parse(savedState);
         gameData.ore = OmegaNum(gameState.ore);
         gameData.orePerSecond = OmegaNum(gameState.orePerSecond);
@@ -118,6 +125,8 @@ function loadGame() {
         gameData.baseOrePerSecond = OmegaNum(gameState.baseOrePerSecond);
         gameData.baseOrePerClick = OmegaNum(gameState.baseOrePerClick);
         gameData.oneTimeMultiplier = OmegaNum(gameState.oneTimeMultiplier);
+        gameData.holdDurationMultiplier = OmegaNum(gameState.holdDurationMultiplier);
+        gameData.researchMultiplier = OmegaNum(gameState.researchMultiplier);
         gameData.holdDuration = OmegaNum(gameState.holdDuration);
         gameData.baseHoldDuration = OmegaNum(gameState.baseHoldDuration);
         gameData.purchasedUpgrades = new Set(gameState.purchasedUpgrades);
@@ -141,7 +150,15 @@ function loadGame() {
             }
         );
 
-
+        soundEnabled = gameState.soundEnabled !== undefined ? gameState.soundEnabled : true; 
+        typingSoundVolume = gameState.typingSoundVolume ? parseFloat(gameState.typingSoundVolume) : 1.0; 
+        popSoundVolume = gameState.popSoundVolume ? parseFloat(gameState.popSoundVolume) : 0.5; 
+        if (typingSound) typingSound.volume = soundEnabled ? typingSoundVolume : 0;
+        if (popSound) popSound.volume = soundEnabled ? popSoundVolume : 0;
+        const typingVolumeSlider = document.getElementById("typing-sound-slider");
+        const popVolumeSlider = document.getElementById("pop-sound-slider");
+        typingVolumeSlider.value = typingSoundVolume; 
+        popVolumeSlider.value = popSoundVolume;
 
         gameData.research = OmegaNum(gameState.research);
         gameData.researchPerSecond = OmegaNum(gameState.researchPerSecond);
@@ -159,6 +176,10 @@ function loadGame() {
             research.costScaling = OmegaNum(gameState.researchDataCostScaling[index]);
         });
 
+        gameState.achievements.forEach((completed, index) => {
+            achievements[index].completed = completed;
+        });
+
         let repairCostIndex = 0;
         let statusIndex = 0;
         let visibilityIndex = 0;
@@ -173,6 +194,7 @@ function loadGame() {
                 visibilityIndex += 1;
             });
         });
+
 
         currentProgressIndex = gameState.currentProgressIndex || 0;
 
@@ -190,7 +212,7 @@ function loadGame() {
             startTrackingTime();
             loadMessages();
         };
-        loadTypingSound();
+        updateSoundSettingsUI();
         updateVisibility();
     }
 }
@@ -218,6 +240,8 @@ function exportGame() {
         oneTimeMultiplier: gameData.oneTimeMultiplier.toString(),
         holdDuration: gameData.holdDuration.toString(),
         baseHoldDuration: gameData.baseHoldDuration.toString(),
+        holdDurationMultiplier: gameData.holdDurationMultiplier.toString(),
+        researchMultiplier: gameData.researchMultiplier.toString(),
         purchasedUpgrades: Array.from(gameData.purchasedUpgrades),
         repeatableUpgradeCosts: gameData.repeatableUpgrades.map(upgrade => upgrade.cost.toString()),
         repeatableUpgradeCostMultipliers: gameData.repeatableUpgrades.map(upgrade => upgrade.costMultiplier.toString()),
@@ -244,6 +268,9 @@ function exportGame() {
         droneUpgradeVisible: gameData.drones.map(drone => drone.upgradeVisible),
         droneBuildTime: gameData.drones.map(drone => drone.buildTime.toString()),
 
+        soundEnabled: soundEnabled,
+        typingSoundVolume: typingSoundVolume.toString(),
+        popSoundVolume: popSoundVolume.toString(),
 
 
         research: gameData.research.toString(),
@@ -257,6 +284,8 @@ function exportGame() {
         researchDataMaxPurchases: gameData.researchData.map(research => research.maxPurchases.toString()),
         researchIsUnlocked: gameData.researchData.map(research => research.isUnlocked),
         researchDataCostScaling: gameData.researchData.map(research => research.costScaling.toString()),
+
+        achievements: achievements.map(achievement => achievement.completed),
 
         systemRepairCosts: Object.keys(systems).flatMap(category => 
             systems[category].map(system => system.repairCost.toString())
@@ -302,6 +331,8 @@ function importGame() {
             gameData.oneTimeUpgrades.forEach((upgrade, index) => {
                 upgrade.upgradeVisible = gameState.oneTimeUpgradeVisible[index];
             });
+            gameData.holdDurationMultiplier = OmegaNum(gameState.holdDurationMultiplier);
+            gameData.researchMultiplier = OmegaNum(gameState.researchMultiplier);
             
             gameData.drones.forEach((drone, index) => {
                 drone.cost = OmegaNum(gameState.droneCosts[index]);
@@ -310,6 +341,13 @@ function importGame() {
                 drone.upgradeVisible = gameState.droneUpgradeVisible[index];
                 drone.buildTime = OmegaNum(gameState.droneBuildTime[index]); 
             });
+
+            soundEnabled = gameState.soundEnabled !== undefined ? gameState.soundEnabled : true; 
+            typingSoundVolume = gameState.typingSoundVolume ? parseFloat(gameState.typingSoundVolume) : 1.0; 
+            popSoundVolume = gameState.popSoundVolume ? parseFloat(gameState.popSoundVolume) : 0.5; 
+            if (typingSound) typingSound.volume = soundEnabled ? typingSoundVolume : 0;
+            if (popSound) popSound.volume = soundEnabled ? popSoundVolume : 0;
+
             gameData.research = OmegaNum(gameState.research);
             gameData.researchPerSecond = OmegaNum(gameState.researchPerSecond);
             gameData.baseResearchPerSecond = OmegaNum(gameState.baseResearchPerSecond);
@@ -322,6 +360,10 @@ function importGame() {
                 research.maxPurchases = OmegaNum(gameState.researchDataMaxPurchases[index]);
                 research.isUnlocked = gameState.researchIsUnlocked[index];
                 research.costScaling = OmegaNum(gameState.researchDataCostScaling[index]);
+            });
+
+            gameState.achievements.forEach((completed, index) => {
+                achievements[index].completed = completed;
             });
 
             let repairCostIndex = 0;

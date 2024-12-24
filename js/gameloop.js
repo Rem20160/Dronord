@@ -50,6 +50,7 @@ function gameLoop() {
     }
     if (gameData.ore.gte(1000)) {
         oreIcon.src = "images/ore3.png";
+        logMessage("You can create a factory.")
     }
     if (gameData.ore.gte(1e6)) {
         oreIcon.src = "images/ore4.png";
@@ -73,9 +74,35 @@ function gameLoop() {
     updateResearchPerSecond();
     updateResearchMaxPurchases();
     updateResearchLimit();
+    updateResearchEffects();
+
+    UnlockAchievements();
+    if (isBoostEnabled) {
+        const oreToReduce = oreUsage.mul(deltaTime); 
+        if (gameData.ore.gte(oreToReduce)) {
+            gameData.ore = gameData.ore.sub(oreToReduce);
+        } else {
+            isBoostEnabled = false;
+            const toggleBoostButton = document.getElementById("toggle-boost-button");
+            const boostStatus = document.getElementById("boost-status");
+            if (toggleBoostButton && boostStatus) {
+                toggleBoostButton.textContent = "Enable Boost";
+                boostStatus.textContent = "Boost Disabled (Not enough Ore)";
+            }
+        }
+    }
 }
 
-window.onload = loadGame; 
+window.onload = () => {
+    if (!localStorage.getItem('gameState')) {
+        console.log("Initializing default state.");
+        saveGame(); 
+    }
+    loadGame();
+    setTimeout(() => {
+        saveGame();
+    }, 100);
+};
 
 requestAnimationFrame(gameLoop);
 
