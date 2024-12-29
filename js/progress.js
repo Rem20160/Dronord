@@ -1,6 +1,6 @@
-const gameProgress = [0, 1, 2, 3];
-const gameProgressThresholds = [new OmegaNum(0), new OmegaNum(0.1), new OmegaNum(2), new OmegaNum(Infinity)];
-const gameProgressText = ["", "Unlock Drones", "Unlock Research", ""];
+const gameProgress = [0, 1, 2, 3, 4, 5];
+const gameProgressThresholds = [new OmegaNum(0), new OmegaNum(0.1), new OmegaNum(2), new OmegaNum(1000), new OmegaNum(10000), new OmegaNum(Infinity)];
+const gameProgressText = ["", "Unlock Drones", "Unlock Research", "Unlock The Factory", "Unlock The Swarm [10000 Drones]", ""];
 let currentProgressIndex = 1;
 
 function updateProgressBar() {
@@ -8,6 +8,11 @@ function updateProgressBar() {
 
     if (currentProgressIndex <= 3) {
         progressValue = OmegaNum(gameData.ore);
+        currentThreshold = gameProgressThresholds[currentProgressIndex];
+        nextThreshold = (currentProgressIndex + 1 < gameProgressThresholds.length) ? gameProgressThresholds[currentProgressIndex + 1] : null;
+    }
+    if (currentProgressIndex === 4) {
+        progressValue = OmegaNum(gameData.drones[0].droneCount);
         currentThreshold = gameProgressThresholds[currentProgressIndex];
         nextThreshold = (currentProgressIndex + 1 < gameProgressThresholds.length) ? gameProgressThresholds[currentProgressIndex + 1] : null;
     }

@@ -2,7 +2,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dronord v0.1</title>
+    <title>Dronord v0.1.1</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" href="images/favicon-peaceful.ico" type="image/x-icon">
@@ -44,12 +44,17 @@
                 <button class="tab-button" data-tab="upgrades" id="upgrades-btn">Upgrades</button>
                 <button class="tab-button" data-tab="drones" id="drones-btn">Drones</button>
                 <button class="tab-button" data-tab="research" id="research-btn">Research</button>
+                <button class="tab-button" data-tab="achievements" id="achievements-btn">Achievements</button>
                 <button class="tab-button" data-tab="options">Options</button>
             </div>
 
             <div class="subtabs" id="upgrades-subtabs" style="display: none;">
                 <button class="subtab-button" data-subtab="repeatable-upgrades-content">Improvements</button>
                 <button class="subtab-button" data-subtab="one-time-upgrades-content" id="one-time-upgrades-btn">Upgrades</button>
+            </div>
+            <div class="subtabs" id="drones-subtabs" style="display: none;">
+                <button class="subtab-button" data-subtab="drones-content">Drones</button>
+                <button class="subtab-button" data-subtab="factory-content" id="factory-btn">Factory</button>
             </div>
             <div class="subtabs" id="options-subtabs" style="display: none;">
                 <button class="subtab-button" data-subtab="Options">Options</button>
@@ -126,13 +131,44 @@
         </div>
 
         <!-- Drones Tab Content-->
-        <div class="tab-content" id="drones" style="display:none;">
-            <div class="drone-box" id="drones-container"></div>
-            <div id="progress-bar" style="display: none;"></div>
+        <div class="tab-content" id="drones" style="display: none;">
+            <div class="subtab-content" id="drones-content" style="display: none;">
+                <div class="drone-box" id="drones-container"></div>
+                <div id="progress-bar" style="display: none;"></div>
+            </div>
+            <div class="subtab-content" id="factory-content" style="display: none;">
+                <div class="factory-container" id="factory-container">
+                    <div id="create-factory" class="factory-button" onclick="createFactory()">
+                        <strong>Create Factory</strong> <br> <span>1 ng ore</span>
+                    </div>
+                    <div id="factory" class="factory">
+                        <div class="factory1">
+                            <div class="factory-container">
+                                <div id="factory-machine" class="factory-machine"></div>
+                                <div class="conveyor"></div>
+                            </div>
+                            <div class="factory-actions">
+                                <button id="production-toggle-button" onclick="startFactoryProduction()">Start Production</button>
+                            </div>
+                        </div>
+                        <div class="factory2">
+                            <div class="factory-info">
+                                <h3>Factory Information</h3>
+                                <p><strong>Production Time:</strong> <span id="production-time">2s</span></p>
+                                <p><strong>Ore Consumption:</strong> <span id="ore-consumption">1 pg</span></p>
+                                <p><strong>Drones Produced:</strong> <span id="drones-produced">0</span></p>
+                                <div class="progress-bar-container" style="width: 100%; background-color: lightgray; margin-top: 10px;">
+                                <div id="factory-progress-bar" style="width: 0%; height: 20px; background-color: rgb(11, 255, 222);"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Research Tab Content -->
-        <div class="tab-content" id="research" style="display:none;">
+        <div class="tab-content" id="research" style="display: none;">
             <div class="research-info" id="research-info">
                 <div class="research-image" id="research-image">
                     <strong>Research</strong> <img src="images/research.png" alt="Research" class="research-icon" id="research-icon">
@@ -151,19 +187,31 @@
             </div>
             <div class="research-container-wrapper" id="research-container-wrapper">
                 <div class="research-container" id="research-container">
-        <!-- Research icons here -->
+                <!-- Research icons here -->
+                <h3>Research Boost</h3>
+                <input id="ore-input" type="number" placeholder="Ore/s usage" value="0" min="0" step="0.001">
+                <div id="boost-preview">Expected Boost: 1x</div>
+                <button id="toggle-boost-button">Enable Boost</button>
+                <p id="boost-status">Boost Disabled</p>
                 </div>
                 <button class="reset-position-btn" id="reset-position-btn"></button>
             </div>
         </div>
 
+        <!-- Achievements here -->
+
+        <div class="tab-content" id="achievements" style="display: block;">
+            <div class="achievements-container" id="achievements-container"></div>
+        </div>
+
         <!-- Options Tab Content -->
-        <div class="tab-content" id="options" style="display:none;">
+        <div class="tab-content" id="options" style="display: none;">
             <div class="subtab-content" id="Options" style="display: none;">
                 <button id="save-btn" class="options-button">Save Game</button>
                 <button id="reset-btn" class="options-button" onclick="showResetConfirmation()">Hard Reset</button>
                 <button id="export-btn" class="options-button">Export Save</button>
                 <button id="import-btn" class="options-button">Import Save</button>
+                <button id="sound-settings-btn" class="options-button" onclick="toggleSoundModal()">Sounds</button> 
                 <div class="time-played"><p class="time"><strong>Time Played:</strong> <span id="time">00:00:00</span></p></div>
             </div>
             <div class="subtab-content" id="info" style="display: none;">
@@ -182,7 +230,14 @@
                         1 kg (kilogram) = 1000 g
                         <br>
                         <br>
-                        Dronord v0.1
+                        Dronord V0.1.1
+                        <br>
+                            <ul>
+                                <li><a href="/changelog.html">Changelog</a></li> 
+                            </ul>
+                            <ul>
+                                <li><a href="/idk.html">Something</a></li> 
+                            </ul>
                         <br>
                         Made by Rem20160 - Discord: mango4357
                     </div>
@@ -191,6 +246,26 @@
         </div>
     </div>
 
+    <div id="soundModal" class="modal" style="display: none;">
+        <div class="sound-modal-content">
+            <span class="close" onclick="toggleSoundModal()">&times;</span>
+            <h2>Sound Settings</h2>
+            <div>
+                <label for="sound-toggle">Sound:</label>
+                <button id="sound-toggle" class="toggle-button" onclick="toggleSound()">On</button>
+            </div>
+            <div>
+                <label for="typing-sound-slider">Typing Volume</label>
+                <br>
+                <input id="typing-sound-slider" type="range" min="0" max="1" step="0.01" value="1" onchange="updateSoundVolume('typing')">
+            </div>
+            <div>
+                <label for="pop-sound-slider">Mine Volume</label>
+                <br>
+                <input id="pop-sound-slider" type="range" min="0" max="1" step="0.01" value="0.5" onchange="updateSoundVolume('pop')">
+            </div>
+        </div>
+    </div>
        
         <div id="confirmation-modal" class="modal">
             <div class="modal-content">
@@ -201,6 +276,7 @@
             </div>
         </div>
     </div>
+    <div class="popup-container" id="popup-container"></div>
     <div class="game-progress-bar-container" id="game-progress-bar-container">
         <strong class="game-progress-text" id="gameProgressText">Unlock Drones</strong>
         <div class="game-progress-bar" id="gameProgressBar"></div>
@@ -212,6 +288,7 @@
     <script src="js/function.js"></script>
     <script src="js/Saving.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/achievements.js"></script>
     <script src="js/gameloop.js"></script>
     <script src="js/tabs.js"></script>
 </body>

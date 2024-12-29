@@ -17,15 +17,15 @@ document.addEventListener("DOMContentLoaded", () => {
             tabButtons.forEach(btn => btn.classList.remove("active"));
             button.classList.add("active");
 
-            if (tabId === "drones") {
-                renderDrones();
-            }
             if (tabId === "research") {
                 updateAllResearchEffects();
                 renderResearchItems();
             }
             if (tabId === "core-systems") {
                 renderSystems();
+            }
+            if (tabId === "achievements") {
+                displayAchievements();
             }
             setupSubtabsForTab(tabId);
         });
@@ -56,6 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (subtabId === "core-systems-content") renderCoreSystems();
                 if (subtabId === "operational-systems-content") renderOperationalSystems();
                 if (subtabId === "utility-systems-content") renderUtilitySystems();
+                if (subtabId === "drones-content") renderDrones();
+                if (subtabId === "factory-content") {if (gameData.factory.purchased) {generateFactoryUI()}};
             });
         });
 

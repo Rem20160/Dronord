@@ -1,45 +1,48 @@
-
 function formatAndConvertNumber(value) {
     const num = OmegaNum(value); 
+    const isNegative = num.lt(0); 
+    const absNum = num.abs(); 
     const thresholds = [
         { value: '1e45', suffix: 'De kg' }, // Decillion kg
-        { value: '1e42', suffix: 'No kg' },   // Nonillion kg
-        { value: '1e39', suffix: 'Oc kg' },   // Octillion kg
-        { value: '1e36', suffix: 'Sp kg' },   // Septillion kg
-        { value: '1e33', suffix: 'Sx kg' },   // Sextillion kg
-        { value: '1e30', suffix: 'Qt kg' },   // Quintillion kg
-        { value: '1e27', suffix: 'Qa kg' },   // Quadrillion kg
-        { value: '1e24', suffix: 'T kg' },   // Trillion kg
-        { value: '1e21', suffix: 'B kg' },   // Billion kg
-        { value: '1e18', suffix: 'M kg' },   // Million kg
-        { value: '1e15', suffix: 'kg' },  // Kilograms
-        { value: '1e12', suffix: 'g' },   // Grams
-        { value: '1e9', suffix: 'mg' },   // Milligrams
-        { value: '1e6', suffix: 'µg' },   // Micrograms
-        { value: '1e3', suffix: 'ng' },   // Nanograms 
-        { value: '1', suffix: 'pg' },     // Picograms 
+        { value: '1e42', suffix: 'No kg' }, // Nonillion kg
+        { value: '1e39', suffix: 'Oc kg' }, // Octillion kg
+        { value: '1e36', suffix: 'Sp kg' }, // Septillion kg
+        { value: '1e33', suffix: 'Sx kg' }, // Sextillion kg
+        { value: '1e30', suffix: 'Qt kg' }, // Quintillion kg
+        { value: '1e27', suffix: 'Qa kg' }, // Quadrillion kg
+        { value: '1e24', suffix: 'T kg' },  // Trillion kg
+        { value: '1e21', suffix: 'B kg' },  // Billion kg
+        { value: '1e18', suffix: 'M kg' },  // Million kg
+        { value: '1e15', suffix: 'kg' },    // Kilograms
+        { value: '1e12', suffix: 'g' },     // Grams
+        { value: '1e9', suffix: 'mg' },     // Milligrams
+        { value: '1e6', suffix: 'µg' },     // Micrograms
+        { value: '1e3', suffix: 'ng' },     // Nanograms 
+        { value: '1', suffix: 'pg' },       // Picograms 
     ];
-    if (num.gte('1e48')) {
-        return `${num.toExponential(1)} kg`;
+
+    if (absNum.gte('1e48')) {
+        return `${isNegative ? '-' : ''}${absNum.toExponential(1)} kg`;
     }
+
     for (const threshold of thresholds) {
-        if (num.gte(threshold.value)) {
-            let formattedValue = num.div(threshold.value);
+        if (absNum.gte(threshold.value)) {
+            let formattedValue = absNum.div(threshold.value);
             if (formattedValue.lt(10)) {
                 formattedValue = formattedValue.toFixed(1); 
             } else {
                 formattedValue = formattedValue.toFixed(0); 
             }
-            return `${formattedValue} ${threshold.suffix}`; 
+            return `${isNegative ? '-' : ''}${formattedValue} ${threshold.suffix}`;
         }
     }
-    let picogramValue = num.toNumber(); 
+
+    let picogramValue = absNum.toNumber(); 
     if (picogramValue < 10) {
-        return `${picogramValue.toFixed(3)} pg`; 
+        return `${isNegative ? '-' : ''}${picogramValue.toFixed(3)} pg`; 
     } else {
-        return `${picogramValue.toFixed(0)} pg`; 
+        return `${isNegative ? '-' : ''}${picogramValue.toFixed(0)} pg`; 
     }
-    
 }
 
 

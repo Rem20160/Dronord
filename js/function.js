@@ -1,11 +1,16 @@
 function updateUI() {
     oreCountDisplay.textContent = formatAndConvertNumber(gameData.ore);         
-    oreRateDisplay.textContent = formatAndConvertNumber(gameData.orePerSecond); 
-    const totalDroneCount = gameData.drones.reduce((sum, drone) => sum.add(drone.droneCount), new OmegaNum(0));
+    const netOreRate = gameData.orePerSecond.minus(isBoostEnabled ? oreUsage : 0).minus(gameData.factory.producing ? (oreDroneConsumption / (productionTime / 1000)) : 0);
+    oreRateDisplay.textContent = formatAndConvertNumber(netOreRate);
+    const totalDroneCount = gameData.drones[0].droneCount;
     droneCountDisplay.textContent = formatNumber(totalDroneCount);
+    droneRateDisplay.textContent = (gameData.factory.producing ? formatNumber(1000 / productionTime) : 0);
     researchCountDisplay.textContent = formatResearch(gameData.research);
     researchRateDisplay.textContent = formatResearch(gameData.researchPerSecond);
     researchLimitDisplay.textContent = formatResearch(gameData.researchLimit);
+    dronesProducedCount.textContent = formatNumber(dronesProduced);
+    oreConsumption.textContent = formatAndConvertNumber(oreDroneConsumption);
+    dronesProductionTime.textContent = `${(productionTime / 1000)}s`;
     animateCorruption(10, 50);
 }
 
@@ -112,8 +117,6 @@ function renderOneTimeUpgrades() {
     });
 }
 
-
-
 function startBuildingDrone(droneId) {
     const drone = gameData.drones.find(d => d.id === droneId);
     if (gameData.ore.gte(drone.cost) && !drone.building) {
@@ -137,7 +140,7 @@ function updateProgress(drone) {
     if (progress < 100) {
         requestAnimationFrame(() => updateProgress(drone)); 
     } else {
-        drone.droneCount = drone.droneCount.add(1);
+        drone.droneCount = drone.droneCount.add(gameData.maxDronesAtOnce);
         updateBaseOrePerSecond();
         updateOrePerSecond();
         renderDrones();
@@ -151,7 +154,7 @@ function resetBuilding(drone) {
     const droneElement = document.querySelector(`[data-drone-id="${drone.id}"]`);
     if (droneElement) {
         const progressFill = droneElement.querySelector(".progress-fill");
-        progressFill.style.width = "0%";  // Reset progress bar when finished
+        progressFill.style.width = "0%";  
     }
 }
 
@@ -246,6 +249,27 @@ function renderDrones() {
                         }
                     }
                 });
+                if (rootPosition) {
+                    let oreBoostContainer = document.getElementById("ore-boost-container");
+                    if (!oreBoostContainer) {
+                        oreBoostContainer = document.createElement("div");
+                        oreBoostContainer.id = "ore-boost-container";
+                        oreBoostContainer.innerHTML = `
+                            <h3>Research Boost</h3>
+                            <input id="ore-input" type="number" placeholder="Ore/s usage" value="" min="0" step="0.001">
+                            <div id="boost-preview">Boost: 1x</div>
+                            <button id="toggle-boost-button">Enable Boost</button>
+                            <p id="boost-status">Boost Disabled</p>
+                        `;
+                        researchContainer.appendChild(oreBoostContainer);
+                    }
+                    const containerWidth = oreBoostContainer.offsetWidth;
+                    const containerHeight = oreBoostContainer.offsetHeight;
+                    oreBoostContainer.style.position = "absolute";
+                    oreBoostContainer.style.left = `${rootPosition.x + 24 - containerWidth / 2}px`;
+                    oreBoostContainer.style.top = `${rootPosition.y - containerHeight - 48}px`;
+                    setupBoostUI();
+                }
             }
         });
     const resetBtn = document.getElementById("reset-position-btn");
@@ -380,13 +404,16 @@ function renderDrones() {
             document.getElementById("research-container-wrapper").appendChild(tooltip);
         };
         tooltip.style.display = "inline-block";
-        tooltip.style.bottom = `${(researchContainerWrapper.offsetHeight - 130)}px`;
+        tooltip.style.bottom = `${(researchContainerWrapper.offsetHeight - 150)}px`;
         tooltip.style.left = `${(researchContainerWrapper.offsetWidth / 2 - 200)}px`;
 
         document.getElementById("research-name").innerHTML = item.name;
         document.getElementById("research-description").innerHTML = item.getDescription();
         document.getElementById("research-increment").innerHTML = item.getDesc();
-        document.getElementById("research-cost").innerHTML = `Cost: <span style="color: rgb(0, 0, 255)">${formatResearch(item.cost)}</span>`;
+        document.getElementById("research-cost").innerHTML = `
+        Cost: <strong style="color: rgb(75, 75, 255)">${formatResearch(item.cost)}</strong>
+        ${item.oreCost ? ` + <strong style="color: rgb(128, 64, 0)">${formatAndConvertNumber(item.oreCost)} Ore</strong>` : ''}
+        `;
         document.getElementById("research-purchases-left").innerHTML = `${formatNumber(item.currentPurchases)} / ${formatNumber(item.maxPurchases)}`;
     }
     function hideTooltip(event) {
@@ -397,8 +424,12 @@ function renderDrones() {
     }
 
     function purchaseResearch(item) {
-        if (gameData.research.gte(item.cost) && item.currentPurchases.lt(item.maxPurchases)) {
+        if (gameData.research.gte(item.cost) &&
+        (!item.oreCost || gameData.ore.gte(item.oreCost)) && item.currentPurchases.lt(item.maxPurchases)) {
             gameData.research = gameData.research.sub(item.cost);
+            if (item.oreCost) {
+                gameData.ore = gameData.ore.sub(item.oreCost);
+            }
             item.currentPurchases = item.currentPurchases.add(new OmegaNum(1));
             item.effect();
     
@@ -485,6 +516,9 @@ function renderDrones() {
     const margin = 0;
     
     researchContainer.addEventListener("mousedown", (event) => {
+        if (event.target.closest("input, button, textarea")) {
+            return; 
+        }
         isPanning = true;
         startX = event.clientX - offsetX;
         startY = event.clientY - offsetY;
@@ -516,4 +550,30 @@ function renderDrones() {
         offsetX = 0;
         offsetY = 0;
         researchContainer.style.transform = "translate(-50%, -50%)";
+    });
+
+    function updateSoundSettingsUI() {
+        const soundToggleButton = document.getElementById("sound-toggle");
+        if (soundEnabled) {
+            soundToggleButton.textContent = "On";
+            soundToggleButton.style.backgroundColor = "green";
+        } else {
+            soundToggleButton.textContent = "Off";
+            soundToggleButton.style.backgroundColor = "red";
+        }
+        const typingVolumeSlider = document.getElementById("typing-sound-slider");
+        const popVolumeSlider = document.getElementById("pop-sound-slider");
+        typingVolumeSlider.value = typingSoundVolume; 
+        popVolumeSlider.value = popSoundVolume;
+    }
+
+    document.getElementById("typing-sound-slider").addEventListener("input", (e) => {
+        typingSoundVolume = e.target.value / 100; 
+        if (typingSound) typingSound.volume = soundEnabled ? typingSoundVolume : 0;
+        saveGame();
+    });
+    document.getElementById("pop-sound-slider").addEventListener("input", (e) => {
+        popSoundVolume = e.target.value / 100; 
+        if (popSound) popSound.volume = soundEnabled ? popSoundVolume : 0;
+        saveGame();
     });
