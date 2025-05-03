@@ -157,7 +157,7 @@ function UnlockAchievements() {
         unlockAchievement(10);
     }
     if (totalDroneCount.gte(250) && !achievements[11].completed) {
-        unlockAchievement(1); 
+        unlockAchievement(11); 
     }
 }
 
