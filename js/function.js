@@ -494,7 +494,7 @@ function renderDrones() {
             if (research.currentPurchases.gte(research.maxPurchases)) {
                 element.classList.add('maxed');
             } 
-            else if (gameData.research.gte(research.cost)) {
+            else if (gameData.research.gte(research.cost) && ( research.oreCost != undefined ? gameData.ore.gte(research.oreCost) : true)) {
                 element.classList.add('affordable');
             }
         });
