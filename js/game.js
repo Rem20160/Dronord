@@ -870,6 +870,7 @@ function updateResearchLimit() {
     gameData.researchLimit = baseLimit
     .mul(R(5).calculateEffect())
     .mul(R(6).calculateEffect())
+    .mul(R(17).calculateEffect())
 }
 
 function updateAllResearchEffects() {
